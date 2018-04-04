@@ -1,0 +1,6 @@
+env
+*.pyc
+*pycache*
+*.so
+result
+*.h
