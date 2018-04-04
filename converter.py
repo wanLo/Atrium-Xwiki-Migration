@@ -4,6 +4,7 @@ from html_converter import FromString
 import os
 import unicodedata
 import re
+from xml.etree.ElementTree import Element, SubElement, tostring, ElementTree
 
 db = MySQLdb.connect(host = "localhost", user = "root" , passwd = "a1b2c3", db = "atrium")
 output_folder_path = "result"
@@ -23,7 +24,7 @@ def convert_atrium_db_to_xar():
             inner join openatrium_node_revisions as r \
             on n.nid = r.nid \
             where n.type = \"book\" \
-            order by n.nid desc, r.vid desc limit 400 offset 4000") # for testing
+            order by n.nid desc, r.vid desc")
 
     migrated = []
     # since the syntax for xwiki documents with history is not particularly beautiful, we skip
@@ -117,6 +118,7 @@ def normalize_title(title):
     ascii_title = ascii_title.replace("<", "")
     ascii_title = ascii_title.replace(">", "")
     ascii_title = ascii_title.replace("&", "&amp;")
+    ascii_title = ascii_title.replace(":", "\:")
 
     return ascii_title
 
@@ -142,20 +144,21 @@ def process_page_content(body):
     return converted_text
 
 def create_project_file(pages):
-    project = "<package>\n"
-    project += create_header()
-    project += '\n'
-    project += "<files>\n"
+    root = Element("package")
+    SubElement(root, "name").text = "SOG Atrium Backup"
+    SubElement(root, "description").text = "Migrated Atrium Data importable to XWiki"
+    SubElement(root, "license").text = "Not applicable"
+    SubElement(root, "author").text = "AtriumMigrator"
+    files = SubElement(root, "files")
+
     for page in pages:
-        # try to merge by default
-        project += "<file language=\"de\" defaultAction=\"0\">"
-        project += page.build_prefixed_path() + ".WebHome"
-        project += "</file>\n"
-    project += "</files>\n"
-    project += "</package>"
+        file_xml = SubElement(files, "file")
+        file_xml.attrib["language"] = "de"
+        file_xml.attrib["defaultAction"] = "0"
+        file_xml.text = page.build_prefixed_path() + ".WebHome"
 
     f = open(output_folder_path + "/package.xml", "w")
-    f.write(project)
+    f.write(tostring(root).decode("utf-8"))
     f.close()
 
 def create_header():
