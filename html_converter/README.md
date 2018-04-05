@@ -1,6 +1,6 @@
 # html2text
 
-This is a fork and highly customized. It is made to work with cgo. Hence build the so using
+This is a fork and highly customized. It is made to work with cgo. Hence build the `.so` using
 `go build -o html2text.so -buildmode=c-shared html2text.go`.
 
 ### Converts HTML into text of the markdown-flavored variety

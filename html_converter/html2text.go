@@ -204,7 +204,7 @@ func (ctx *textifyTraverseContext) handleElement(node *html.Node) error {
 			return err
 		}
 		str := subCtx.buf.String()
-		return ctx.emit("*" + str + "*")
+		return ctx.emit("**" + str + "**")
 
 	case atom.A:
 		linkText := ""
@@ -216,24 +216,27 @@ func (ctx *textifyTraverseContext) handleElement(node *html.Node) error {
 		// If image is the only child, take its alt text as the link text.
 		if img := node.FirstChild; img != nil && node.LastChild == img && img.DataAtom == atom.Img {
 			if altText := getAttrVal(img, "alt"); altText != "" {
-				if err := ctx.emit(altText); err != nil {
-					return err
-				}
+				linkText = altText
 			}
 		} else if err := ctx.traverseChildren(node); err != nil {
 			return err
 		}
 
-		hrefLink := ""
-		if attrVal := getAttrVal(node, "href"); attrVal != "" {
-			attrVal = ctx.normalizeHrefLink(attrVal)
-			// Don't print link href if it matches link element content or if the link is empty.
-			if !ctx.options.OmitLinks && attrVal != "" && linkText != attrVal {
-				hrefLink = "( " + attrVal + " )"
-			}
+		hrefLink := getAttrVal(node, "href")
+		link := ""
+		// inspect the link. This is very specific and if we ever want to publish this module, we have
+		// to refactor this.
+		// - if it starts with /atrium prepend https://studieren-ohne.grenzen.org
+		// - if it starts with /file prepend https://atrium.studieren-ohne.grenzen.org
+		if strings.HasPrefix(hrefLink, "/atrium") {
+			link = "https://studieren-ohne-grenzen.org" + hrefLink
+		} else if strings.HasPrefix(hrefLink, "/file") {
+			link = "https://atrium.studieren-ohne-grenzen.org" + hrefLink
+		} else {
+			link = hrefLink // keep the link.
 		}
 
-		return ctx.emit(hrefLink)
+		return ctx.emit("[" + linkText + "]" + "(" + link + ")")
 
 	case atom.P, atom.Ul:
 		return ctx.paragraphHandler(node)
@@ -292,8 +295,16 @@ func (ctx *textifyTraverseContext) handleTableElement(node *html.Node) error {
 			return err
 		}
 
+		if len(ctx.tableCtx.header) == 0 && len(ctx.tableCtx.body) > 1 {
+			// there is no header. Use first row instead!
+			ctx.tableCtx.header = ctx.tableCtx.body[0]
+			ctx.tableCtx.body = ctx.tableCtx.body[1:]
+		}
+
 		buf := &bytes.Buffer{}
 		table := tablewriter.NewWriter(buf)
+		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+		table.SetCenterSeparator("|")
 		table.SetHeader(ctx.tableCtx.header)
 		table.SetFooter(ctx.tableCtx.footer)
 		table.AppendBulk(ctx.tableCtx.body)
@@ -409,7 +420,8 @@ func (ctx *textifyTraverseContext) emit(data string) error {
 	return nil
 }
 
-const maxLineLen = 74
+// since we actually want to produce markdown, we should not care
+const maxLineLen = 15000
 
 func (ctx *textifyTraverseContext) breakLongLines(data string) []string {
 	// Only break lines when in blockquotes.

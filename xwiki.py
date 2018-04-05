@@ -43,7 +43,7 @@ class XWikiFile(object):
         SubElement(root, "title").text = self.title
         SubElement(root, "comment").text = "Migration OpenAtrium"
         SubElement(root, "minorEdit").text = "false"
-        SubElement(root, "syntaxId").text = "markdown/1.1"
+        SubElement(root, "syntaxId").text = "markdown/1.2"
         SubElement(root, "hidden").text = "false"
         SubElement(root, "content").text = self.content.decode('utf-8')
 
