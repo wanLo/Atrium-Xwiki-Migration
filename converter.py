@@ -139,7 +139,7 @@ def convert_single_entry(atrium_entry):
     return page
 
 def process_page_content(body):
-    converted_text = FromString(body)
+    converted_text = pypandoc.convert_text(source=body, to="md", format="html")
 
     return converted_text
 
