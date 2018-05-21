@@ -44,8 +44,9 @@ class XWikiFile(object):
         SubElement(root, "comment").text = "Migration OpenAtrium"
         SubElement(root, "minorEdit").text = "false"
         SubElement(root, "syntaxId").text = "markdown/1.2"
+        #SubElement(root, "syntaxId").text = "mediawiki/1.6"
         SubElement(root, "hidden").text = "false"
-        SubElement(root, "content").text = self.content.decode('utf-8')
+        SubElement(root, "content").text = self.content
 
         return tostring(root)
 

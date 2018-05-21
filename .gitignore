@@ -4,3 +4,9 @@ env
 *.so
 result
 *.h
+
+*.swo
+*.swp
+
+*.sql
+

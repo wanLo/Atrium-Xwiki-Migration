@@ -1,12 +1,12 @@
 from xwiki import *
 import MySQLdb
-from html_converter import FromString
 import os
 import unicodedata
 import re
+import pypandoc
 from xml.etree.ElementTree import Element, SubElement, tostring, ElementTree
 
-db = MySQLdb.connect(host = "localhost", user = "root" , passwd = "a1b2c3", db = "atrium")
+db = MySQLdb.connect(host = "localhost", user = "root" , passwd = "", db = "atrium")
 output_folder_path = "result"
 parent_cursor = db.cursor()
 
@@ -23,7 +23,7 @@ def convert_atrium_db_to_xar():
             from openatrium_node as n \
             inner join openatrium_node_revisions as r \
             on n.nid = r.nid \
-            where n.type = \"book\" \
+            where n.type = \"book\" or n.type=\"group\" \
             order by n.nid desc, r.vid desc")
 
     migrated = []
@@ -73,9 +73,20 @@ def convert_atrium_db_to_xar():
                 print("Page with nid %s has no link information" % page.nid)
 
 
+    prepend_groups(migrated)
     create_project_file(migrated)
     create_page_files(migrated)
-    # TODO clean up references in links
+
+def prepend_groups(migrated):
+    for page in migrated:
+        if page.parent_node is not None:
+            continue
+
+        group_nid = page_to_group[page.nid]
+        group = groups[group_nid]
+
+        page.parent_node = group
+
 
 def initialize():
     parent_cursor.execute("select b.nid, ml.mlid, b.bid, ml.plid \
@@ -88,12 +99,45 @@ def initialize():
     mlid_to_nid = dict(zip((l[1] for l in elems), (l[0] for l in elems)))
     menu_link_information = dict(zip((l[0] for l in elems), (l[1:] for l in elems)))
 
+    # match book pages to groups
+    global page_to_group
+    parent_cursor.execute("select n.nid, ac.group_nid from openatrium_og_ancestry as ac \
+            inner join openatrium_node as n \
+            on ac.nid = n.nid \
+            order by n.nid, ac.group_nid")
+    elems = parent_cursor.fetchall()
+    page_to_group = dict(zip((l[0] for l in elems), (l[1] for l in elems)))
+
+    global titles_by_group
+    parent_cursor.execute("select nid, title from openatrium_node where type = \"group\" ")
+    elems = parent_cursor.fetchall()
+    titles_by_group = dict(zip((l[0] for l in elems), (l[1] for l in elems)))
+
+    global groups
+    groups = {}
+    for index, title in titles_by_group.items():
+        groups[index] = create_group_page(index, title)
+
+def create_group_page(nid, title):
+    page = XWikiPage()
+    page.nid = nid
+    page.vid = 1
+
+    page.content = title
+
+    page.title = title
+    page.qualifier = normalize_title(page.title)
+
+    print("Created group page with nid %d and title %s" % (page.nid, page.title))
+
+    return page
+
 def find_parent(page):
     menu_information = menu_link_information[page.nid]
     book_root = menu_information[1]
     node_parent_mlid = menu_information[2]
     predecessor_mlid = node_parent_mlid
-    if book_root == menu_information[0]: # we are root!
+    if book_root == menu_information[0]: # we are at book root.
         return None
 
     assert(predecessor_mlid != menu_information[0])
@@ -126,7 +170,15 @@ def convert_single_entry(atrium_entry):
     page = XWikiPage()
     page.nid = atrium_entry[0]
     page.vid = atrium_entry[1]
-    page.content = process_page_content(atrium_entry[2])
+
+    try:
+        # pandoc might decide that the page is malformed in weird way.
+        page.content = process_page_content(atrium_entry[2])
+    except Exception as e:
+        page.content = "ERROR during conversion: " + str(e)
+        page.content += "nid = %s, vid = %s - contact it!" % (page.nid, page.vid)
+        print("Got error: %s, nid = %s, vid = %s" % (str(e), page.nid, page.vid))
+
     page.title = atrium_entry[3]
     page.qualifier = normalize_title(page.title)
 
@@ -139,7 +191,7 @@ def convert_single_entry(atrium_entry):
     return page
 
 def process_page_content(body):
-    converted_text = pypandoc.convert_text(source=body, to="md", format="html")
+    converted_text = pypandoc.convert_text(source=body, to="commonmark", format="html", extra_args=("+RTS","-K64m", "-RTS"))
 
     return converted_text
 
@@ -187,5 +239,6 @@ if __name__ == "__main__":
     if not os.path.exists(output_folder_path):
         os.makedirs(output_folder_path)
 
+    print(pypandoc.get_pandoc_formats()[1])
     initialize()
     convert_atrium_db_to_xar()
