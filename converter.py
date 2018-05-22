@@ -5,6 +5,8 @@ import unicodedata
 import re
 import pypandoc
 from xml.etree.ElementTree import Element, SubElement, tostring, ElementTree
+from joblib import Parallel, delayed
+import multiprocessing
 
 db = MySQLdb.connect(host = "localhost", user = "root" , passwd = "", db = "atrium")
 output_folder_path = "result"
@@ -23,7 +25,7 @@ def convert_atrium_db_to_xar():
             from openatrium_node as n \
             inner join openatrium_node_revisions as r \
             on n.nid = r.nid \
-            where n.type = \"book\" or n.type=\"group\" \
+            where n.type = \"book\" \
             order by n.nid desc, r.vid desc")
 
     migrated = []
@@ -32,11 +34,14 @@ def convert_atrium_db_to_xar():
     db_elems = cursor.fetchall()
 
     productive_page_by_nid = {}
+    to_migrate = []
     for elem in db_elems:
         if elem[0] not in productive_page_by_nid:
-            migrated_elem = convert_single_entry(elem)
-            migrated.append(migrated_elem)
-            productive_page_by_nid[elem[0]] = migrated_elem
+            to_migrate.append(elem)
+            productive_page_by_nid[elem[0]] = elem
+
+    num_cores = multiprocessing.cpu_count()
+    migrated = Parallel(n_jobs=num_cores)(delayed(convert_single_entry)(elem) for elem in to_migrate)
 
     # we could refactor this away! However, leave it since time is short and this will only run once
     for item in migrated:
@@ -61,7 +66,7 @@ def convert_atrium_db_to_xar():
                 if parent_nid != None:
                     if parent_nid not in pages_by_node_id:
                         # add to root page
-                        print("WARN: There is no page with nid %d of page nid=%d" 
+                        print("WARN: There is no page with nid %d of page nid=%d"
                                 % (parent_nid, page.nid))
                         continue
 
@@ -72,21 +77,30 @@ def convert_atrium_db_to_xar():
             else:
                 print("Page with nid %s has no link information" % page.nid)
 
-
     prepend_groups(migrated)
-    create_project_file(migrated)
-    create_page_files(migrated)
+
+    all_xwiki_pages = migrated + [page for nid, page in groups.items()]
+
+    create_project_file(all_xwiki_pages)
+    create_page_files(all_xwiki_pages)
 
 def prepend_groups(migrated):
     for page in migrated:
         if page.parent_node is not None:
             continue
 
+        if page.nid not in page_to_group:
+            print("WARN: Could not find Group node for node id %d" % page.nid)
+            page.parent_node = groups[-1]
+            continue
+
         group_nid = page_to_group[page.nid]
-        group = groups[group_nid]
-
-        page.parent_node = group
-
+        if group_nid in groups:
+            group = groups[group_nid]
+            page.parent_node = group
+        else:
+            page.parent_node = groups[-1]
+            print("WARN: Could not find Group node for group_nid %d" % group_nid)
 
 def initialize():
     parent_cursor.execute("select b.nid, ml.mlid, b.bid, ml.plid \
@@ -117,6 +131,8 @@ def initialize():
     groups = {}
     for index, title in titles_by_group.items():
         groups[index] = create_group_page(index, title)
+
+    groups[-1] = create_group_page(-1, "Unmatched")
 
 def create_group_page(nid, title):
     page = XWikiPage()
@@ -152,16 +168,12 @@ def find_parent(page):
 def normalize_title(title):
     ascii_title = unicodedata.normalize('NFKD', title)
     # if title has any / we would create a directory, must not happen
-    ascii_title = ascii_title.replace("/", "_")
+    ascii_title = ascii_title.replace("/", "\/")
     # if title has any . we convert it to / which is bad again
-    ascii_title = ascii_title.replace(".", "-")
+    ascii_title = ascii_title.replace(".", "\.")
     # only if we actually get problems with xwiki import
     ascii_title = ''.join([c for c in ascii_title if ord(c) < 128])
 
-    # bad characters (to be safe)
-    ascii_title = ascii_title.replace("<", "")
-    ascii_title = ascii_title.replace(">", "")
-    ascii_title = ascii_title.replace("&", "&amp;")
     ascii_title = ascii_title.replace(":", "\:")
 
     return ascii_title

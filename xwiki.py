@@ -24,8 +24,8 @@ class XWikiFile(object):
 
     def build_xml_content_file(self):
         root = Element("xwikidoc")
-        root.attrib["version"] = "1.2"
-        root.attrib["reference"] = self.build_prefixed_path()
+        root.attrib["version"] = "1.3"
+        root.attrib["reference"] = self.build_prefixed_path() + ".WebHome"
         root.attrib["locale"] = ""
         SubElement(root, "web").text = self.build_prefixed_path()
         SubElement(root, "name").text = "WebHome"
@@ -34,7 +34,7 @@ class XWikiFile(object):
         SubElement(root, "translation").text = "0"
         SubElement(root, "creator").text = "XWiki.OAMigrator"
         SubElement(root, "creationDate").text = ""
-        SubElement(root, "parent").text = self.parent_node.build_prefixed_path() if self.parent_node else self.path_prefix
+        SubElement(root, "parent").text = (self.parent_node.build_prefixed_path() if self.parent_node else self.path_prefix) + ".WebHome"
         SubElement(root, "author").text = self.get_xwiki_author()
         SubElement(root, "contentAuthor").text = self.get_xwiki_author()
         SubElement(root, "date").text = ""
