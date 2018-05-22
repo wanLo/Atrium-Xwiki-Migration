@@ -1,4 +1,6 @@
 from xwiki import *
+from wikilink_lexer import WikiLinkInlineLexer
+from mdrenderer import MdRenderer
 import MySQLdb
 import os
 import unicodedata
@@ -7,6 +9,7 @@ import pypandoc
 from xml.etree.ElementTree import Element, SubElement, tostring, ElementTree
 from joblib import Parallel, delayed
 import multiprocessing
+import mistune
 
 db = MySQLdb.connect(host = "localhost", user = "root" , passwd = "", db = "atrium")
 output_folder_path = "result"
@@ -80,6 +83,8 @@ def convert_atrium_db_to_xar():
     prepend_groups(migrated)
 
     all_xwiki_pages = migrated + [page for nid, page in groups.items()]
+
+    adjust_content_links(all_xwiki_pages)
 
     create_project_file(all_xwiki_pages)
     create_page_files(all_xwiki_pages)
@@ -206,6 +211,11 @@ def process_page_content(body):
     converted_text = pypandoc.convert_text(source=body, to="commonmark", format="html", extra_args=("+RTS","-K64m", "-RTS"))
 
     return converted_text
+
+def adjust_content_links(pages):
+    transform_links = mistune.Markdown(MdRenderer(pages_by_node_id), inline=WikiLinkInlineLexer())
+    for page in pages:
+            page.content = transform_links(page.content)
 
 def create_project_file(pages):
     root = Element("package")
