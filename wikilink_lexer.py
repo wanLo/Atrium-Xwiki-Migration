@@ -1,3 +1,5 @@
+from mistune import InlineLexer
+
 class WikiLinkInlineLexer(InlineLexer):
   def enable_wiki_link(self):
     # add wiki_link rules
