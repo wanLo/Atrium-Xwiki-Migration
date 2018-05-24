@@ -1,4 +1,5 @@
 from xml.etree.ElementTree import Element, SubElement, dump, tostring, ElementTree
+from os import path
 
 class XWikiFile(object):
 
@@ -21,6 +22,9 @@ class XWikiFile(object):
 
     def build_prefixed_path(self):
         return self.path_prefix + "." + self.build_path()
+
+    def build_relative_path(self, origin):
+        return path.relpath(self.build.prefixed_path().replace('.', path.sep), origin.replace('.', path.sep)).replace(path.sep, '.')
 
     def build_xml_content_file(self):
         root = Element("xwikidoc")

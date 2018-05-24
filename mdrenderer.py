@@ -16,8 +16,8 @@ import re
 
 class MdRenderer(Renderer):
 
-  def init(self, pages):
-
+  def init(self, current_page, pages):
+    self.current_page = current_page
     self.pages = pages
     self.is_atrium_link = re.compile(r'https://atrium\.studieren-ohne-grenzen\.org/[\S]+?/node/([\S]+)')
 
@@ -86,16 +86,16 @@ class MdRenderer(Renderer):
   def autolink(self, link, is_email=False):
     m = self.is_atrium_link.match(link)
     if m and m.group(1) in self.pages:
-      linked_page = self.pages[m.group(1)][0]
-      return self.wiki_link('doc:'+linked_page.build_prefixed_path(), linked_page.title)
+      linked_page = self.pages[int(m.group(1))][0]
+      return self.wiki_link('doc:'+linked_page.build_relative_path(self.prefixed_page.build_prefixed_path()), linked_page.title)
     else:
       return '<' + link + '>'
 
   def link(self, link, title, text, image=False):
     m = self.is_atrium_link.match(link)
     if m and not image and m.group(1) in self.pages:
-      linked_page = self.pages[m.group(1)][0]
-      return self.wiki_link('doc:'+linked_page.build_prefixed_path(), text)
+      linked_page = self.pages[int(m.group(1))][0]
+      return self.wiki_link('doc:'+linked_page.build_relative_path(self.build_prefixed_path()), text)
     else:
       r = (image and '!' or '') + '[' + text + '](' + link + ')'
     if title:
