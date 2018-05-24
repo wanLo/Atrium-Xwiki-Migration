@@ -87,7 +87,7 @@ class MdRenderer(Renderer):
     m = self.is_atrium_link.match(link)
     if m and m.group(1) in self.pages:
       linked_page = self.pages[int(m.group(1))][0]
-      return self.wiki_link('doc:'+linked_page.build_relative_path(self.prefixed_page.build_prefixed_path()), linked_page.title)
+      return self.wiki_link('doc:'+linked_page.build_relative_path(self.current_page.build_prefixed_path()), linked_page.title)
     else:
       return '<' + link + '>'
 
@@ -95,7 +95,7 @@ class MdRenderer(Renderer):
     m = self.is_atrium_link.match(link)
     if m and not image and m.group(1) in self.pages:
       linked_page = self.pages[int(m.group(1))][0]
-      return self.wiki_link('doc:'+linked_page.build_relative_path(self.build_prefixed_path()), text)
+      return self.wiki_link('doc:'+linked_page.build_relative_path(self.current_page.build_prefixed_path()), text)
     else:
       r = (image and '!' or '') + '[' + text + '](' + link + ')'
     if title:
