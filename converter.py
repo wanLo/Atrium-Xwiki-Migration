@@ -29,7 +29,7 @@ def convert_atrium_db_to_xar():
             inner join openatrium_node_revisions as r \
             on n.nid = r.nid \
             where n.type = \"book\" \
-            order by n.nid desc, r.vid desc")
+            order by n.nid desc, r.vid desc limit 100")
 
     migrated = []
     # since the syntax for xwiki documents with history is not particularly beautiful, we skip
@@ -213,7 +213,8 @@ def process_page_content(body):
     return converted_text
 
 def adjust_content_links(pages):
-    transform_links = mistune.Markdown(MdRenderer(pages_by_node_id), inline=WikiLinkInlineLexer())
+    renderer = MdRenderer(pages_by_node_id)
+    transform_links = mistune.Markdown(renderer=renderer, inline=WikiLinkInlineLexer())
     for page in pages:
             page.content = transform_links(page.content)
 
