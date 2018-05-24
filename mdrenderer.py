@@ -85,7 +85,7 @@ class MdRenderer(Renderer):
 
   def autolink(self, link, is_email=False):
     m = self.is_atrium_link.match(link)
-    if m:
+    if m and m.group(1) in self.pages:
       linked_page = self.pages[m.group(1)][0]
       return self.wiki_link('doc:'+linked_page.build_prefixed_path(), linked_page.title)
     else:
@@ -93,7 +93,7 @@ class MdRenderer(Renderer):
 
   def link(self, link, title, text, image=False):
     m = self.is_atrium_link.match(link)
-    if m and not image:
+    if m and not image and m.group(1) in self.pages:
       linked_page = self.pages[m.group(1)][0]
       return self.wiki_link('doc:'+linked_page.build_prefixed_path(), text)
     else:
