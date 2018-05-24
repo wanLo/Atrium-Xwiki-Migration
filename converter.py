@@ -42,6 +42,7 @@ def convert_atrium_db_to_xar():
         if elem[0] not in productive_page_by_nid:
             to_migrate.append(elem)
             productive_page_by_nid[elem[0]] = elem
+            assert(type(elem[0]) is int)
 
     num_cores = multiprocessing.cpu_count()
     migrated = Parallel(n_jobs=num_cores)(delayed(convert_single_entry)(elem) for elem in to_migrate)
