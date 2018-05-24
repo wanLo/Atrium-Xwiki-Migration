@@ -213,7 +213,8 @@ def process_page_content(body):
     return converted_text
 
 def adjust_content_links(pages):
-    renderer = MdRenderer(pages_by_node_id)
+    renderer = MdRenderer()
+    renderer.init(pages_by_node_id)
     transform_links = mistune.Markdown(renderer=renderer, inline=WikiLinkInlineLexer(renderer))
     for page in pages:
             page.content = transform_links(page.content)
