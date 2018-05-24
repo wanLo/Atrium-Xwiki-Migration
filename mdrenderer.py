@@ -12,11 +12,12 @@
 """
 
 from mistune import Renderer
+import re
 
 class MdRenderer(Renderer):
 
   def __init__(self, pages):
-    self.pages
+    self.pages = pages
     self.is_atrium_link = re.compile(r'https://atrium\.studieren-ohne-grenzen\.org/[\S]+?/node/([\S]+)')
 
   def get_block(text):
