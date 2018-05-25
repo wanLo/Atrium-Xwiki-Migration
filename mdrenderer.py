@@ -98,13 +98,13 @@ class MdRenderer(Renderer):
   def autolink(self, link, is_email=False):
     linked_page = self.get_atrium_page(link) 
     if linked_page != False:
-        return self.wiki_link('doc:'+linked_page.build_prefixed_path(), linked_page.title)
+        return self.wiki_link('doc:'+linked_page.build_prefixed_path()+'.WebHome', linked_page.title)
     return '<' + link + '>'
 
   def link(self, link, title, text, image=False):
     linked_page = self.get_atrium_page(link) 
     if not image and linked_page != False:
-        return self.wiki_link('doc:'+linked_page.build_prefixed_path(), text)
+        return self.wiki_link('doc:'+linked_page.build_prefixed_path()+'.WebHome', text)
     r = (image and '!' or '') + '[' + text + '](' + link + ')'
     if title:
       r += '"' + title + '"'
