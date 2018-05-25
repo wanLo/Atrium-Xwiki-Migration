@@ -19,7 +19,7 @@ class MdRenderer(Renderer):
   def init(self, current_page, pages):
     self.current_page = current_page
     self.pages = pages
-    self.is_atrium_link = re.compile(r'https://atrium\.studieren-ohne-grenzen\.org/[\S]+?/node/([\S]+)')
+    self.is_atrium_link = re.compile(r'https?://atrium\.studieren-ohne-grenzen\.org/[\S]+?/node/([\d]+)[\S]*?|https?://studieren-ohne-grenzen\.org/atrium/[\S]+?/node/([\d]+)[\S]*?')
 
   def get_block(text):
     type = text[0]
@@ -83,21 +83,29 @@ class MdRenderer(Renderer):
   def codespan(self, text):
     return '`' + text + '`'
 
-  def autolink(self, link, is_email=False):
+  def get_atrium_page(self, link):
     m = self.is_atrium_link.match(link)
-    if m and m.group(1) in self.pages:
-      linked_page = self.pages[int(m.group(1))][0]
-      return self.wiki_link('doc:'+linked_page.build_relative_path(self.current_page.build_prefixed_path()), linked_page.title)
-    else:
-      return '<' + link + '>'
+    if m:
+      if m.group(1) != None:
+        linked_node = int(m.group(1))
+      else:
+        linked_node = int(m.group(2))
+      if linked_node in self.pages:
+        linked_page = self.pages[linked_node][0]
+        return linked_page
+    return False
+
+  def autolink(self, link, is_email=False):
+    linked_page = self.get_atrium_page(link) 
+    if linked_page != False:
+        return self.wiki_link('doc:'+linked_page.build_prefixed_path(), linked_page.title)
+    return '<' + link + '>'
 
   def link(self, link, title, text, image=False):
-    m = self.is_atrium_link.match(link)
-    if m and not image and m.group(1) in self.pages:
-      linked_page = self.pages[int(m.group(1))][0]
-      return self.wiki_link('doc:'+linked_page.build_relative_path(self.current_page.build_prefixed_path()), text)
-    else:
-      r = (image and '!' or '') + '[' + text + '](' + link + ')'
+    linked_page = self.get_atrium_page(link) 
+    if not image and linked_page != False:
+        return self.wiki_link('doc:'+linked_page.build_prefixed_path(), text)
+    r = (image and '!' or '') + '[' + text + '](' + link + ')'
     if title:
       r += '"' + title + '"'
     return r

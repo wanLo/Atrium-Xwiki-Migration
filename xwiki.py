@@ -18,13 +18,10 @@ class XWikiFile(object):
         if self.parent_node is None:
             return self.qualifier
 
-        return self.parent_node.build_path() + "." + self.qualifier
+        return self.parent_node.build_path() + "." + self.qualifier + '.WebHome'
 
     def build_prefixed_path(self):
         return self.path_prefix + "." + self.build_path()
-
-    def build_relative_path(self, origin):
-        return path.relpath(self.build.prefixed_path().replace('.', path.sep), origin.replace('.', path.sep)).replace(path.sep, '.')
 
     def build_xml_content_file(self):
         root = Element("xwikidoc")
