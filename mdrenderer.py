@@ -19,7 +19,7 @@ class MdRenderer(Renderer):
   def init(self, current_page, pages):
     self.current_page = current_page
     self.pages = pages
-    self.is_atrium_link = re.compile(r'https?://atrium\.studieren-ohne-grenzen\.org/[\S]+?/node/([\d]+)[\S]*?|https?://studieren-ohne-grenzen\.org/atrium/[\S]+?/node/([\d]+)[\S]*?')
+    self.is_atrium_link = re.compile(r'https?://atrium\.studieren-ohne-grenzen\.org/[\S]+?/node/([\d]+)[\S]*?|https?://studieren-ohne-grenzen\.org/atrium/[\S]+?/node/([\d]+)[\S]*?|https?://www\.studieren-ohne-grenzen\.org/[\S]+?/node/([\d]+)[\S]*?')
 
   def get_block(text):
     type = text[0]
