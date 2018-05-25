@@ -43,7 +43,7 @@ class MdRenderer(Renderer):
     return '---\n'
 
   def header(self, text, level, raw=None):
-    return '#'*(level+1) + text + '\n\n'
+    return '#'*(level+1) + ' ' + text + '\n\n'
 
   def paragraph(self, text):
     return text + '\n\n'
