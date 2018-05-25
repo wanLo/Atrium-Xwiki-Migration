@@ -101,9 +101,11 @@ class MdRenderer(Renderer):
     linked_page = self.get_atrium_page(link) 
     if linked_page != False:
         new_link = self.wiki_link('doc:'+linked_page.build_prefixed_path()+'.WebHome', linked_page.title)
+        new_link = new_link.replace("\.", "\\.") # the xwiki markdown processor "unescapes" the links. Hence, we need to escape the escape.
+        new_link = new_link.replace("\:", "\\:") # the xwiki markdown processor "unescapes" the links. Hence, we need to escape the escape.
         # replace text and link in the pages itself... it is quite a dirty hack
         self.current_page.content = self.current_page.content.replace('('+link+')', new_link)
-        self.current_page.content = self.current_page.content.replace('[' + text + ']', '')
+        self.current_page.content = self.current_page.content.replace('[' + link + ']', '')
         return new_link
     return '<' + link + '>'
 
@@ -111,6 +113,8 @@ class MdRenderer(Renderer):
     linked_page = self.get_atrium_page(link)
     if not image and linked_page != False:
         new_link = self.wiki_link('doc:'+linked_page.build_prefixed_path()+'.WebHome', text)
+        new_link = new_link.replace("\.", "\\.") # the xwiki markdown processor "unescapes" the links. Hence, we need to escape the escape.
+        new_link = new_link.replace("\:", "\\:") # the xwiki markdown processor "unescapes" the links. Hence, we need to escape the escape.
         # replace text and link in the pages itself... it is quite a dirty hack
         self.current_page.content = self.current_page.content.replace('('+link+')', new_link)
         self.current_page.content = self.current_page.content.replace('[' + text + ']', '')
