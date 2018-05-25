@@ -100,13 +100,23 @@ class MdRenderer(Renderer):
   def autolink(self, link, is_email=False):
     linked_page = self.get_atrium_page(link) 
     if linked_page != False:
-        return self.wiki_link('doc:'+linked_page.build_prefixed_path()+'.WebHome', linked_page.title)
+        new_link = self.wiki_link('doc:'+linked_page.build_prefixed_path()+'.WebHome', linked_page.title)
+        # replace text and link in the pages itself... it is quite a dirty hack
+        self.current_page.content = self.current_page.content.replace('('+link+')', new_link)
+        self.current_page.content = self.current_page.content.replace('[' + text + ']', '')
+        return new_link
     return '<' + link + '>'
 
   def link(self, link, title, text, image=False):
-    linked_page = self.get_atrium_page(link) 
+    linked_page = self.get_atrium_page(link)
     if not image and linked_page != False:
-        return self.wiki_link('doc:'+linked_page.build_prefixed_path()+'.WebHome', text)
+        new_link = self.wiki_link('doc:'+linked_page.build_prefixed_path()+'.WebHome', text)
+        # replace text and link in the pages itself... it is quite a dirty hack
+        self.current_page.content = self.current_page.content.replace('('+link+')', new_link)
+        self.current_page.content = self.current_page.content.replace('[' + text + ']', '')
+
+        return new_link
+
     r = (image and '!' or '') + '[' + text + '](' + link + ')'
     if title:
       r += '"' + title + '"'

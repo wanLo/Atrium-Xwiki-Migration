@@ -218,7 +218,7 @@ def adjust_content_links(pages):
         renderer = MdRenderer()
         renderer.init(page, pages_by_node_id)
         transform_links = mistune.Markdown(renderer=renderer, inline=WikiLinkInlineLexer(renderer))
-        page.content = transform_links(page.content)
+        transform_links(page.content)
 
 def create_project_file(pages):
     root = Element("package")
