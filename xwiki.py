@@ -1,4 +1,5 @@
 from xml.etree.ElementTree import Element, SubElement, dump, tostring, ElementTree
+from os import path
 
 class XWikiFile(object):
 
@@ -34,7 +35,7 @@ class XWikiFile(object):
         SubElement(root, "translation").text = "0"
         SubElement(root, "creator").text = "XWiki.OAMigrator"
         SubElement(root, "creationDate").text = ""
-        SubElement(root, "parent").text = (self.parent_node.build_prefixed_path() if self.parent_node else self.path_prefix) + ".WebHome"
+        SubElement(root, "parent").text = (self.parent_node.build_prefixed_path() if self.parent_node else self.path_prefix) + '.WebHome'
         SubElement(root, "author").text = self.get_xwiki_author()
         SubElement(root, "contentAuthor").text = self.get_xwiki_author()
         SubElement(root, "date").text = ""
