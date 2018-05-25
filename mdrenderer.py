@@ -86,10 +86,12 @@ class MdRenderer(Renderer):
   def get_atrium_page(self, link):
     m = self.is_atrium_link.match(link)
     if m:
-      if m.group(1) != None:
+      linked_node = None
+      if m.group(1) is not None:
         linked_node = int(m.group(1))
-      else:
+      elif m.group(2) is not None:
         linked_node = int(m.group(2))
+
       if linked_node in self.pages:
         linked_page = self.pages[linked_node][0]
         return linked_page
